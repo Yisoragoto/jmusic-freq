@@ -1,0 +1,40 @@
+name: Verify dictionary
+
+# CI never commits. dist/ is built and committed locally; this job rebuilds it
+# from data/counts.json, validates it against Yomitan's schemas, and fails if
+# the committed dist/ does not match what the scripts produce.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests jsonschema
+
+      - name: Rebuild dictionary
+        run: python scripts/build.py
+
+      - name: Validate against Yomitan schemas
+        run: python scripts/validate.py
+
+      - name: Committed dist/ must match the rebuild
+        run: |
+          if ! git diff --quiet -- dist; then
+            git diff --stat -- dist
+            echo "::error::dist/ is out of date — run scripts/build.py locally and commit dist/."
+            exit 1
+          fi

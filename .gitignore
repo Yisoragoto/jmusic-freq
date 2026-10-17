@@ -1,0 +1,4 @@
+# Lyrics are copyrighted: they stay on your machine and are never published.
+lyrics/
+__pycache__/
+*.pyc
