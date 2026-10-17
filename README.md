@@ -29,15 +29,40 @@ https://raw.githubusercontent.com/Yisoragoto/jmusic-freq/main/dist/jmusic-freq.z
 
 收录的歌曲列表见 [`data/song_list.csv`](data/song_list.csv)，流派分布写在辞典的描述里。
 
+## 数据来源
+
+| 数据集 | 用途 |
+|---|---|
+| [KaraKaraWitch/uta-net-songs](https://huggingface.co/datasets/KaraKaraWitch/uta-net-songs) | 主语料：歌ネット约 33 万首歌（截至 2023-03） |
+| [KaraKaraWitch/uta-net-rank-25-05-2024](https://huggingface.co/datasets/KaraKaraWitch/uta-net-rank-25-05-2024) | 选曲：歌ネット总榜前 11,700 首（按页面访问量） |
+| [mohamed-khalil/AnimeSongsLyrics](https://huggingface.co/datasets/mohamed-khalil/AnimeSongsLyrics) | 流派：按歌ネット曲目 ID 标出动漫歌曲 |
+
+默认只收录排行榜上的歌，歌词完全相同的版本（重新发行、翻唱）只算一次。流派分三类：
+
+- `vocaloid`：歌手栏写有合成音声（`feat. 初音ミク` 等）
+- `anime`：出现在 AnimeSongsLyrics 里，或 tie-up 栏含「アニメ」「劇場版」
+- `general`：其余所有歌曲
+
+数据截至 2023 年 3 月，不含角色歌和同人作品。
+
 ## 本地生成
 
 ```bash
-pip install fugashi unidic-lite requests jsonschema
+pip install fugashi unidic-lite requests jsonschema pyarrow
 ```
 
-1. 在 `data/song_list.csv` 登记歌曲：`id,title,artist,year,genre`
-2. 把歌词存成 `lyrics/<id>.txt`（UTF-8，`lyrics/` 已被 `.gitignore` 忽略）
-3. 运行：
+1. 导入歌词（首次会下载约 1GB 到 `sources/`；`sources/` 和 `lyrics/` 都已被 `.gitignore` 忽略）：
+
+```bash
+python scripts/import_utanet.py              # 排行榜上的歌（默认）
+python scripts/import_utanet.py --top 5000   # 只要排行榜前 5000
+python scripts/import_utanet.py --all        # 全部约 33 万首
+```
+
+   连 huggingface.co 慢的话，可以设 `HF_ENDPOINT=https://hf-mirror.com`。
+   也可以不导入，手动在 `data/song_list.csv` 登记歌曲，并把歌词存成 `lyrics/<id>.txt`。
+
+2. 统计并构建：
 
 ```bash
 python scripts/count_words.py   # lyrics/ → data/counts.json（可加 --genre anime 只统计某流派）
@@ -45,7 +70,7 @@ python scripts/build.py         # counts.json → dist/index.json + dist/jmusic-
 python scripts/validate.py      # 用 Yomitan 官方 schema 校验
 ```
 
-4. 提交 `data/` 和 `dist/` 后 push。GitHub Actions 会从 `counts.json` 重新构建并校验，
+3. 提交 `data/` 和 `dist/` 后 push。GitHub Actions 会从 `counts.json` 重新构建并校验，
    如果提交的 `dist/` 和重新构建的结果不一致，检查会失败。
 
 构建是可复现的：`revision` 由内容的 SHA-256 推出，zip 内时间戳固定，

@@ -1,0 +1,12 @@
+# Artists whose Uta-Net credits are VOCALOID / synth-voice songs even without "feat. 初音ミク".
+# One exact artist name per line (as it appears in data/song_list.csv). Edit freely.
+DECO*27
+wowaka
+ハチ
+じん
+KEMU VOXX
+Chinozo
+かいりきベア
+Orangestar
+バルーン
+Ayase
